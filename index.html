@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONITORING RAYA 2027 - Dashboard & Gantt</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Bar Animation */
+        .bar-transition { transition: width 1s ease-in-out; }
+        
+        /* Modal Animation */
+        .modal-enter-active { animation: modalFadeIn 0.2s ease-out forwards; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* Hide scrollbar for mobile nav but allow scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback } = React;
+
+        // --- ICON COMPONENTS ---
+        const IconWrapper = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            LayoutDashboard: (props) => <IconWrapper {...props}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></IconWrapper>,
+            BarChart2: (props) => <IconWrapper {...props}><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></IconWrapper>,
+            CheckCircle: (props) => <IconWrapper {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></IconWrapper>,
+            AlertTriangle: (props) => <IconWrapper {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconWrapper>,
+            Clock: (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconWrapper>,
+            AlertOctagon: (props) => <IconWrapper {...props}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconWrapper>,
+            TrendingUp: (props) => <IconWrapper {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></IconWrapper>,
+            Trash2: (props) => <IconWrapper {...props}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></IconWrapper>,
+            X: (props) => <IconWrapper {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconWrapper>,
+            RefreshCw: (props) => <IconWrapper {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconWrapper>,
+            Edit: (props) => <IconWrapper {...props}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></IconWrapper>,
+            Plus: (props) => <IconWrapper {...props}><path d="M5 12h14"/><path d="M12 5v14"/></IconWrapper>,
+        };
+
+        // --- CONFIGURATION ---
+        const SERIES_CONFIG = [
+            { id: 1, name: "Series 1", launchDate: "2027-01-04", schedule: [ { id: 1, start: "2026-06-01", end: "2026-06-14", leadTime: 14 }, { id: 2, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 3, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 4, start: "2026-06-20", end: "2026-06-24", leadTime: 5 }, { id: 5, start: "2026-06-25", end: "2026-06-29", leadTime: 5 }, { id: 6, start: "2026-06-30", end: "2026-07-06", leadTime: 7 }, { id: 7, start: "2026-07-07", end: "2026-09-11", leadTime: 67 }, { id: 8, start: "2026-07-07", end: "2026-08-20", leadTime: 45 }, { id: 9, start: "2026-08-14", end: "2026-08-27", leadTime: 14 }, { id: 10, start: "2026-08-28", end: "2026-09-11", leadTime: 15 }, { id: 11, start: "2026-09-12", end: "2026-11-17", leadTime: 67 }, { id: 12, start: "2026-11-18", end: "2026-11-22", leadTime: 5 }, { id: 13, start: "2026-11-18", end: "2026-11-27", leadTime: 10 }, { id: 14, start: "2026-11-23", end: "2026-12-07", leadTime: 15 } ] },
+            { id: 2, name: "Series 2", launchDate: "2027-01-11", schedule: [ { id: 1, start: "2026-06-15", end: "2026-06-29", leadTime: 15 }, { id: 2, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 3, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 4, start: "2026-07-05", end: "2026-07-09", leadTime: 5 }, { id: 5, start: "2026-07-10", end: "2026-07-14", leadTime: 5 }, { id: 6, start: "2026-07-15", end: "2026-07-21", leadTime: 7 }, { id: 7, start: "2026-07-22", end: "2026-09-26", leadTime: 67 }, { id: 8, start: "2026-07-22", end: "2026-09-04", leadTime: 45 }, { id: 9, start: "2026-08-29", end: "2026-09-11", leadTime: 14 }, { id: 10, start: "2026-09-12", end: "2026-09-26", leadTime: 15 }, { id: 11, start: "2026-09-27", end: "2026-12-02", leadTime: 67 }, { id: 12, start: "2026-12-03", end: "2026-12-07", leadTime: 5 }, { id: 13, start: "2026-12-03", end: "2026-12-12", leadTime: 10 }, { id: 14, start: "2026-12-12", end: "2026-12-26", leadTime: 15 } ] },
+            { id: 3, name: "Series 3", launchDate: "2027-01-18", schedule: [ { id: 1, start: "2026-07-01", end: "2026-07-14", leadTime: 14 }, { id: 2, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 3, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 4, start: "2026-07-20", end: "2026-07-24", leadTime: 5 }, { id: 5, start: "2026-07-25", end: "2026-07-29", leadTime: 5 }, { id: 6, start: "2026-07-30", end: "2026-08-05", leadTime: 7 }, { id: 7, start: "2026-08-06", end: "2026-09-11", leadTime: 37 }, { id: 8, start: "2026-08-06", end: "2026-09-19", leadTime: 45 }, { id: 9, start: "2026-09-13", end: "2026-09-26", leadTime: 14 }, { id: 10, start: "2026-09-27", end: "2026-10-11", leadTime: 15 }, { id: 11, start: "2026-10-12", end: "2026-12-17", leadTime: 67 }, { id: 12, start: "2026-12-18", end: "2026-12-22", leadTime: 5 }, { id: 13, start: "2026-12-18", end: "2026-12-27", leadTime: 10 }, { id: 14, start: "2026-12-27", end: "2027-01-08", leadTime: 13 } ] },
+            { id: 4, name: "Series 4", launchDate: "2027-01-25", schedule: [ { id: 1, start: "2026-07-15", end: "2026-07-29", leadTime: 15 }, { id: 2, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 3, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 4, start: "2026-08-04", end: "2026-08-08", leadTime: 5 }, { id: 5, start: "2026-08-09", end: "2026-08-13", leadTime: 5 }, { id: 6, start: "2026-08-14", end: "2026-08-20", leadTime: 7 }, { id: 7, start: "2026-08-21", end: "2026-10-26", leadTime: 67 }, { id: 8, start: "2026-08-21", end: "2026-10-04", leadTime: 45 }, { id: 9, start: "2026-09-28", end: "2026-10-11", leadTime: 14 }, { id: 10, start: "2026-10-12", end: "2026-10-26", leadTime: 15 }, { id: 11, start: "2026-10-27", end: "2027-01-01", leadTime: 67 }, { id: 12, start: "2027-01-02", end: "2027-01-06", leadTime: 5 }, { id: 13, start: "2027-01-02", end: "2027-01-11", leadTime: 10 }, { id: 14, start: "2027-01-06", end: "2027-01-15", leadTime: 10 } ] },
+            { id: 5, name: "Series 5", launchDate: "2027-02-01", schedule: [ { id: 1, start: "2026-08-01", end: "2026-08-14", leadTime: 14 }, { id: 2, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 3, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 4, start: "2026-08-20", end: "2026-08-24", leadTime: 5 }, { id: 5, start: "2026-08-25", end: "2026-08-29", leadTime: 5 }, { id: 6, start: "2026-08-30", end: "2026-09-05", leadTime: 7 }, { id: 7, start: "2026-09-06", end: "2026-11-11", leadTime: 67 }, { id: 8, start: "2026-09-06", end: "2026-10-20", leadTime: 45 }, { id: 9, start: "2026-10-14", end: "2026-10-27", leadTime: 14 }, { id: 10, start: "2026-10-28", end: "2026-11-11", leadTime: 15 }, { id: 11, start: "2026-11-12", end: "2027-01-17", leadTime: 67 }, { id: 12, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 13, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 14, start: "2027-01-23", end: "2027-01-24", leadTime: 2 } ] }
+        ];
+
+        const TASK_NAMES = [
+            "Approval Design", "Approval Accessories", "Approval Bahan", "Approval Motif", "Approval Color", "Payment Paperworks",
+            "Material Production - Fabric", "Material Procurement - Brocade", "Pre Production Sample", "Size Set", "Mass Production",
+            "Inbound", "Photoshoot & Catalog", "Offline Distribution"
+        ];
+
+        // UPDATED: Timeline dimajukan start-nya ke Januari 2026 agar data awal tahun terlihat
+        const TIMELINE_START = "2026-01-01"; 
+        const TIMELINE_END = "2027-03-31";
+
+        // --- HELPER FUNCTIONS ---
+        const getDiffDays = (start, end) => {
+            const date1 = new Date(start);
+            const date2 = new Date(end);
+            return Math.ceil((date2 - date1) / (1000 * 60 * 60 * 24));
+        };
+
+        const formatDate = (dateStr) => {
+            if (!dateStr) return "-";
+            const options = { day: 'numeric', month: 'short', year: '2-digit' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        };
+
+        const parseDateLocal = (dateStr) => {
+            if(!dateStr) return null;
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        };
+
+        const getRecommendation = (taskName) => {
+            if (taskName.includes("Approval")) return `Solusi ${taskName}: Eskalasi ke Manajemen/Owner, minta prioritas review, atau jadwalkan meeting darurat.`;
+            if (taskName.includes("Pre Production") || taskName.includes("Size Set")) return `Solusi ${taskName}: Pastikan sample dikirim tepat waktu, gunakan kurir express jika antar kota/negara.`;
+            if (taskName.includes("Payment")) return `Solusi ${taskName}: Follow up Finance segera, cek kelengkapan dokumen invoice/PO.`;
+            if (taskName.includes("Fabric") || taskName.includes("Brocade") || taskName.includes("Material")) return `Solusi ${taskName}: Cek stok supplier lain, minta pengiriman parsial (split shipment), atau gunakan ekspedisi udara.`;
+            if (taskName.includes("Mass Production")) return `Solusi ${taskName}: Tambah shift lembur (overtime), tambah manpower, atau sub-kon ke vendor jahit rekanan.`;
+            if (taskName.includes("Inbound")) return `Solusi ${taskName}: Prioritaskan slot bongkar di gudang, tambah tenaga bantuan (helper) inbound.`;
+            if (taskName.includes("Photoshoot")) return `Solusi ${taskName}: Gunakan sample yang ada (mockup), booking studio/fotografer alternatif.`;
+            if (taskName.includes("Distribution")) return `Solusi ${taskName}: Gunakan logistik express/cargo udara, prioritaskan area dengan demand tertinggi.`;
+            return `Solusi ${taskName}: Evaluasi ulang timeline dan koordinasi dengan PIC terkait.`;
+        };
+
+        const getMonths = (startDate, endDate) => {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const months = [];
+            let current = new Date(start);
+            current.setDate(1);
+            while (current <= end) {
+                months.push(new Date(current));
+                current.setMonth(current.getMonth() + 1);
+            }
+            return months;
+        };
+
+        const calculateBarStyles = (startStr, endStr, totalStartStr, totalDurationMs) => {
+            if (!startStr || !endStr) return null;
+            let start = new Date(startStr).getTime();
+            let end = new Date(endStr).getTime();
+            const totalStart = new Date(totalStartStr).getTime();
+            
+            // Validasi tanggal
+            if (isNaN(start) || isNaN(end)) return null;
+
+            if (end < totalStart) return null; // Selesai sebelum timeline mulai
+            
+            // Clip start jika mulai sebelum timeline
+            if (start < totalStart) start = totalStart;
+
+            const left = ((start - totalStart) / totalDurationMs) * 100;
+            const width = ((end - start) / totalDurationMs) * 100;
+            
+            return { left: `${Math.max(0, left)}%`, width: `${Math.max(0, width)}%` };
+        };
+
+
+        // --- DEFINISI MODAL ---
+        const ConfirmationModal = React.memo(({ config, onConfirm, onCancel }) => {
+            if (!config.isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity modal-enter-active">
+                    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 transform transition-all scale-100">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2 bg-rose-100 text-rose-600 rounded-full"><Icons.AlertTriangle size={24} /></div>
+                            <h3 className="text-lg font-bold text-slate-800">Konfirmasi</h3>
+                        </div>
+                        <p className="text-slate-600 mb-6">{config.message}</p>
+                        <div className="flex justify-end gap-3">
+                            <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Batal</button>
+                            <button onClick={onConfirm} className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors">Ya, Lanjutkan</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        });
+
+        const AddTaskModal = ({ isOpen, onClose, onSave }) => {
+            if (!isOpen) return null;
+            const [form, setForm] = useState({ name: '', planStart: '', planEnd: '', leadTime: 0 });
+            const handleChange = (e) => { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })); };
+            const handleSubmit = () => { onSave(form); setForm({ name: '', planStart: '', planEnd: '', leadTime: 0 }); };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity modal-enter-active">
+                    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 transform transition-all scale-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">Tambah Aktivitas Baru</h3>
+                            <button onClick={onClose}><Icons.X size={20} className="text-slate-400 hover:text-slate-600"/></button>
+                        </div>
+                        <div className="space-y-3">
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Nama Aktivitas</label><input type="text" name="name" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.name} onChange={handleChange} placeholder="Contoh: Packing" /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Plan Start</label><input type="date" name="planStart" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.planStart} onChange={handleChange} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Plan End</label><input type="date" name="planEnd" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.planEnd} onChange={handleChange} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Lead Time (Hari)</label><input type="number" name="leadTime" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.leadTime} onChange={handleChange} placeholder="0" /></div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Batal</button>
+                            <button onClick={handleSubmit} disabled={!form.name} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors disabled:opacity-50">Tambah</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const EditTaskModal = ({ config, onClose, onSave, onChange }) => {
+            if (!config.isOpen) return null;
+            const { data: taskData } = config;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity modal-enter-active">
+                    <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 transform transition-all scale-100">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-slate-800">Edit Aktivitas</h3>
+                            <button onClick={onClose}><Icons.X size={20} className="text-slate-400 hover:text-slate-600"/></button>
+                        </div>
+                        <div className="space-y-3">
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Nama Aktivitas</label><input type="text" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={taskData.name} onChange={(e) => onChange('name', e.target.value)} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Plan Start</label><input type="date" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={taskData.planStart} onChange={(e) => onChange('planStart', e.target.value)} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Plan End</label><input type="date" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={taskData.planEnd} onChange={(e) => onChange('planEnd', e.target.value)} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">Lead Time (Hari)</label><input type="number" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={taskData.leadTime} onChange={(e) => onChange('leadTime', parseInt(e.target.value) || 0)} /></div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Batal</button>
+                            <button onClick={onSave} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors">Simpan</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [data, setData] = useState([]);
+            const [isClient, setIsClient] = useState(false);
+            const [projectStart, setProjectStart] = useState("");
+            const [isDataLoaded, setIsDataLoaded] = useState(false);
+            const [currentTime, setCurrentTime] = useState(new Date());
+
+            // Modal States
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, message: '', onConfirm: null });
+            const [editModalConfig, setEditModalConfig] = useState({ isOpen: false, seriesIndex: null, activityIndex: null, data: null });
+            const [addModalConfig, setAddModalConfig] = useState({ isOpen: false, seriesIndex: null });
+
+            // Memos
+            const timelineMonths = useMemo(() => getMonths(TIMELINE_START, TIMELINE_END), []);
+            const timelineTotalDuration = new Date(TIMELINE_END).getTime() - new Date(TIMELINE_START).getTime();
+
+            useEffect(() => {
+                setIsClient(true);
+                const timer = setInterval(() => { setCurrentTime(new Date()); }, 1000);
+                let earliestStart = "2099-12-31";
+                SERIES_CONFIG.forEach(series => { series.schedule.forEach(sch => { if (sch.start < earliestStart) earliestStart = sch.start; }); });
+                setProjectStart(earliestStart);
+
+                // Load Data - Using v3 keys
+                const savedData = localStorage.getItem('planner_data_v3'); 
+
+                if (savedData) { setData(JSON.parse(savedData)); } 
+                else {
+                    const initialData = SERIES_CONFIG.map((config) => {
+                        const tasks = config.schedule.map((sch, index) => ({
+                            id: index + 1, name: TASK_NAMES[index], leadTime: sch.leadTime, planStart: sch.start, planEnd: sch.end, actualStart: "", actualEnd: "", status: "pending"
+                        }));
+                        return { id: config.id, name: config.name, launchDate: config.launchDate, activities: tasks };
+                    });
+                    setData(initialData);
+                }
+                setIsDataLoaded(true);
+                return () => clearInterval(timer);
+            }, []);
+
+            useEffect(() => { if (isDataLoaded) localStorage.setItem('planner_data_v3', JSON.stringify(data)); }, [data, isDataLoaded]);
+
+            // Handlers
+            const showConfirm = useCallback((message, action) => setModalConfig({ isOpen: true, message, onConfirm: action }), []);
+            const handleConfirm = useCallback(() => { if (modalConfig.onConfirm) modalConfig.onConfirm(); setModalConfig({ isOpen: false, message: '', onConfirm: null }); }, [modalConfig]);
+            const handleCancel = useCallback(() => setModalConfig({ isOpen: false, message: '', onConfirm: null }), []);
+
+            const openAddActivity = useCallback((sIdx) => setAddModalConfig({ isOpen: true, seriesIndex: sIdx }), []);
+            const closeAddActivity = useCallback(() => setAddModalConfig({ isOpen: false, seriesIndex: null }), []);
+            const handleSaveNewActivity = useCallback((newActivityData) => {
+                const { seriesIndex } = addModalConfig;
+                if (seriesIndex === null) return;
+                
+                // Deep Copy for Immutable Update
+                const newData = data.map((series, idx) => {
+                    if (idx !== seriesIndex) return series;
+                    const maxId = series.activities.reduce((max, act) => Math.max(max, act.id), 0);
+                    return {
+                        ...series,
+                        activities: [
+                            ...series.activities,
+                            {
+                                id: maxId + 1,
+                                name: newActivityData.name,
+                                planStart: newActivityData.planStart,
+                                planEnd: newActivityData.planEnd,
+                                leadTime: parseInt(newActivityData.leadTime) || 0,
+                                actualStart: "",
+                                actualEnd: "",
+                                status: "pending"
+                            }
+                        ]
+                    };
+                });
+                
+                setData(newData);
+                closeAddActivity();
+            }, [data, addModalConfig, closeAddActivity]);
+
+            const openEditActivity = useCallback((sIdx, aIdx) => {
+                const activity = data[sIdx].activities[aIdx];
+                setEditModalConfig({ isOpen: true, seriesIndex: sIdx, activityIndex: aIdx, data: { ...activity } });
+            }, [data]);
+            const closeEditActivity = useCallback(() => setEditModalConfig({ isOpen: false, seriesIndex: null, activityIndex: null, data: null }), []);
+            const saveEditActivity = useCallback(() => {
+                const { seriesIndex, activityIndex, data: newDataItem } = editModalConfig;
+                if (seriesIndex !== null && activityIndex !== null && newDataItem) {
+                    const newData = data.map((series, sIdx) => {
+                         if (sIdx !== seriesIndex) return series;
+                         const newActivities = [...series.activities];
+                         newActivities[activityIndex] = newDataItem;
+                         return { ...series, activities: newActivities };
+                    });
+                    setData(newData);
+                    closeEditActivity();
+                }
+            }, [data, editModalConfig, closeEditActivity]);
+            const handleEditFormChange = useCallback((field, value) => setEditModalConfig(prev => ({ ...prev, data: { ...prev.data, [field]: value } })), []);
+            
+            const deleteActivity = useCallback((sIdx, aIdx) => { 
+                const newData = data.map((series, idx) => {
+                    if (idx !== sIdx) return series;
+                    const newActivities = [...series.activities];
+                    newActivities.splice(aIdx, 1);
+                    return { ...series, activities: newActivities };
+                });
+                setData(newData); 
+            }, [data]);
+            const confirmDeleteActivity = useCallback((sIdx, aIdx) => showConfirm("Hapus aktivitas ini?", () => deleteActivity(sIdx, aIdx)), [showConfirm, deleteActivity]);
+
+            const resetGanttData = () => {
+                const initialData = SERIES_CONFIG.map((config) => {
+                    const tasks = config.schedule.map((sch, index) => ({ id: index + 1, name: TASK_NAMES[index], leadTime: sch.leadTime, planStart: sch.start, planEnd: sch.end, actualStart: "", actualEnd: "", status: "pending" }));
+                    return { id: config.id, name: config.name, launchDate: config.launchDate, activities: tasks };
+                });
+                setData(initialData);
+            };
+
+            const confirmResetGantt = () => showConfirm("Reset Gantt Chart?", resetGanttData);
+
+            const handleUpdateActual = (sIdx, aIdx, field, val) => { const newData = data.map((series, i) => { if (i !== sIdx) return series; const newActivities = [...series.activities]; newActivities[aIdx] = { ...newActivities[aIdx], [field]: val }; return { ...series, activities: newActivities }; }); setData(newData); };
+
+            const stats = useMemo(() => {
+                let total=0, comp=0, delayed=0; 
+                let totalProgressScore = 0; // Accumulator for % (0.0 to 1.0)
+                const today = new Date(); 
+                today.setHours(0,0,0,0);
+                
+                let recs = [];
+                let delayedSeriesSummary = [];
+
+                data.forEach(s => {
+                    let cnt = 0;
+                    s.activities.forEach(a => {
+                        total++;
+                        const planEnd = new Date(a.planEnd);
+                        const isDone = !!a.actualEnd;
+                        const isStarted = !!a.actualStart;
+                        
+                        // Delay Logic
+                        if ((isDone && new Date(a.actualEnd) > planEnd) || (!isDone && today > planEnd)) {
+                            delayed++;
+                            recs.push({ id: `${s.id}-${a.id}`, seriesName: s.name, message: getRecommendation(a.name) });
+                            cnt++; // Series delayed count
+                        } 
+                        
+                        // Progress Logic
+                        if (isDone) {
+                            comp++;
+                            totalProgressScore += 1;
+                        } else if (isStarted) {
+                            // Calculate partial progress
+                            const start = parseDateLocal(a.actualStart);
+                            // Avoid division by zero
+                            let duration = (planEnd - start) / (1000 * 60 * 60 * 24);
+                            if (duration <= 0) duration = 1;
+                            
+                            const elapsed = (today - start) / (1000 * 60 * 60 * 24);
+                            let p = elapsed / duration;
+                            
+                            // Clamp between 0 and 0.99 (since it's not done)
+                            if (p < 0) p = 0;
+                            if (p > 0.95) p = 0.95; // Cap at 95% if not marked done
+                            
+                            totalProgressScore += p;
+                        }
+                    });
+                    if (cnt > 0) delayedSeriesSummary.push(`${s.name} (${cnt})`);
+                });
+                
+                return { total, comp, delayed, recs, delayedSeriesString: delayedSeriesSummary, totalProgressScore };
+            }, [data]);
+            
+            const completionRate = stats.total ? Math.round((stats.totalProgressScore / stats.total) * 100) : 0;
+
+            // RENDERERS
+            const renderDashboard = () => (
+                <div className="space-y-6 animate-fade-in pb-10">
+                    <div className="bg-gradient-to-r from-slate-800 to-indigo-900 rounded-xl p-6 text-white shadow-lg mb-6">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div><h2 className="text-2xl font-bold mb-1">Production Monitor Raya 2027</h2><p className="text-indigo-200 text-sm">Target Launching: Jan - Feb 2027</p></div>
+                            <div className="flex gap-4 text-center">
+                                <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10"><p className="text-xs text-indigo-200 uppercase tracking-wide">Project Kickoff</p><p className="font-mono font-bold text-sm">{formatDate(projectStart)}</p></div>
+                                <div className="bg-emerald-500/20 px-4 py-2 rounded-lg border border-emerald-500/30 backdrop-blur-sm"><p className="text-xs text-emerald-300 uppercase tracking-wide">Launch Period</p><p className="font-mono font-bold text-emerald-300 text-sm">{formatDate(SERIES_CONFIG[0].launchDate)} - {formatDate(SERIES_CONFIG[SERIES_CONFIG.length - 1].launchDate)}</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={`rounded-xl p-6 shadow-sm border mb-8 flex flex-col md:flex-row items-start gap-4 transition-colors duration-500 ${stats.delayed > 0 ? 'bg-rose-50 border-rose-100' : 'bg-emerald-50 border-emerald-100'}`}>
+                        <div className="flex items-start gap-4 w-full">
+                            <div className={`p-3 rounded-full shadow-sm shrink-0 ${stats.delayed > 0 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>{stats.delayed > 0 ? <Icons.AlertOctagon size={28} /> : <Icons.TrendingUp size={28} />}</div>
+                            <div className="w-full">
+                                <h3 className={`text-lg font-bold mb-1 ${stats.delayed > 0 ? 'text-rose-800' : 'text-emerald-800'}`}>{stats.delayed > 0 ? "Risiko Keterlambatan Terdeteksi" : "Produksi On Track"}</h3>
+                                <p className={`text-sm mb-4 ${stats.delayed > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{stats.delayed > 0 ? `Terdapat total ${stats.delayed} aktivitas terlambat.` : "Seluruh aktivitas berjalan sesuai timeline."}</p>
+                                {stats.delayed > 0 && stats.recs.length > 0 && <div className="bg-white/60 rounded-lg p-4 border border-rose-200/50"><ul className="list-none space-y-2">{stats.recs.slice(0, 5).map(r => <li key={r.id} className="text-xs text-slate-700 font-medium"><span className="font-bold text-rose-600">[{r.seriesName}]</span> {r.message}</li>)}</ul></div>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden group hover:border-indigo-100 transition-colors">
+                            <div className="flex justify-between items-start mb-4"><div><p className="text-slate-500 text-sm font-medium">Total Progress</p><h3 className="text-4xl font-bold text-slate-800 mt-1">{completionRate}%</h3></div><div className="p-3 bg-indigo-50 rounded-lg text-indigo-600"><Icons.BarChart2 size={24} /></div></div>
+                            <div className="w-full bg-slate-100 rounded-full h-2"><div className="bg-indigo-600 h-2 rounded-full transition-all duration-1000" style={{ width: `${completionRate}%` }}></div></div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                            <div className="flex justify-between items-start"><div><p className="text-slate-500 text-sm font-medium">Completed</p><h3 className="text-4xl font-bold text-emerald-600 mt-1">{stats.comp}</h3></div><div className="p-3 bg-emerald-50 rounded-lg text-emerald-600"><Icons.CheckCircle size={24} /></div></div>
+                        </div>
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                            <div className="flex justify-between items-start"><div><p className="text-slate-500 text-sm font-medium">Delayed</p><h3 className="text-4xl font-bold text-rose-500 mt-1">{stats.delayed}</h3></div><div className="p-3 bg-rose-50 rounded-lg text-rose-500"><Icons.AlertTriangle size={24} /></div></div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center"><h3 className="font-bold text-slate-800">Series Status Overview</h3><span className="text-xs text-slate-500">Breakdown per series</span></div>
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 gap-6">
+                                {data.map((series) => {
+                                    const seriesTotal = series.activities.length;
+                                    let lateCount = 0;
+                                    let onTimeCount = 0;
+                                    let inProgressCount = 0;
+                                    let pendingCount = 0;
+                                    let accumulatedProgress = 0;
+                                    const today = new Date();
+                                    today.setHours(0,0,0,0);
+                                    
+                                    series.activities.forEach(act => {
+                                        const planEndObj = new Date(act.planEnd);
+                                        const startObj = act.actualStart ? parseDateLocal(act.actualStart) : null;
+                                        const isDoneLate = act.actualEnd && new Date(act.actualEnd) > planEndObj;
+                                        const isPendingLate = !act.actualEnd && today > planEndObj;
+                                        const isDoneOnTime = act.actualEnd && !isDoneLate;
+                                        const isInProgress = act.actualStart && !act.actualEnd && !isPendingLate;
+
+                                        if (isDoneLate || isPendingLate) {
+                                            lateCount++;
+                                        } else if (isDoneOnTime) {
+                                            onTimeCount++;
+                                        } else if (isInProgress) {
+                                            inProgressCount++;
+                                            if (startObj) {
+                                                const endObj = new Date(act.planEnd);
+                                                let totalDur = (endObj - startObj) / (1000 * 60 * 60 * 24);
+                                                if (totalDur <= 0) totalDur = 1;
+                                                const elapsed = (today - startObj) / (1000 * 60 * 60 * 24);
+                                                let p = elapsed / totalDur;
+                                                if (p < 0.1) p = 0.1;
+                                                if (p > 1) p = 1;
+                                                accumulatedProgress += p;
+                                            }
+                                        } else {
+                                            pendingCount++;
+                                        }
+                                    });
+
+                                    pendingCount = seriesTotal - onTimeCount - lateCount - inProgressCount;
+                                    const pOnTime = (onTimeCount / seriesTotal) * 100;
+                                    const pLate = (lateCount / seriesTotal) * 100;
+                                    const pInProgressWidth = (inProgressCount / seriesTotal) * 100;
+                                    const pPending = (pendingCount / seriesTotal) * 100;
+                                    const avgProgress = inProgressCount > 0 ? Math.round((accumulatedProgress / inProgressCount) * 100) : 0;
+
+                                    return (
+                                        <div key={series.id} className="group">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2"><h4 className="font-bold text-slate-700">{series.name}</h4><span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Target: {formatDate(series.launchDate)}</span></div>
+                                                <div className="flex items-center gap-3 text-xs font-semibold">
+                                                    <span className="text-emerald-600">{onTimeCount} Done</span>
+                                                    <span className="text-rose-600">{lateCount} Late</span>
+                                                    <span className="text-blue-600">{inProgressCount} In Progress ({avgProgress}%)</span>
+                                                    <span className="text-slate-400">{Math.max(0, pendingCount)} Pending</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden flex bar-transition">
+                                                <div className="bg-emerald-500 h-full flex items-center justify-center text-[9px] text-white font-bold" style={{ width: `${pOnTime}%` }} title={`On Time`}>{onTimeCount > 0 && onTimeCount}</div>
+                                                <div className="bg-rose-500 h-full flex items-center justify-center text-[9px] text-white font-bold" style={{ width: `${pLate}%` }} title={`Late`}>{lateCount > 0 && lateCount}</div>
+                                                <div className="bg-blue-500 h-full flex items-center justify-center text-[9px] text-white font-bold" style={{ width: `${pInProgressWidth}%` }} title={`In Progress`}>{inProgressCount > 0 && `${avgProgress}%`}</div>
+                                                <div className="bg-slate-200 h-full flex items-center justify-center text-[9px] text-slate-500 font-bold" style={{ width: `${pPending}%` }} title={`Pending`}>{pendingCount > 0 && pendingCount}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderGantt = () => (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-140px)]">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
+                        <div><h3 className="font-bold text-slate-800 text-lg">Master Schedule</h3><span className="text-xs text-slate-500">Timeline: Jun 2026 - Mar 2027</span></div>
+                        <div className="flex items-center gap-4 text-xs font-medium"><div className="hidden md:flex items-center gap-2"><span className="w-3 h-3 bg-slate-300 rounded-sm"></span> Plan</div><div className="hidden md:flex items-center gap-2"><span className="w-3 h-3 bg-emerald-500 rounded-sm"></span> Actual (Done)</div><div className="flex items-center gap-2"><span className="w-3 h-3 bg-rose-500 rounded-sm"></span> Late</div><div className="flex items-center gap-2"><span className="w-3 h-3 bg-blue-500 rounded-sm"></span> Progress</div><button onClick={confirmResetGantt} className="px-3 py-1 bg-rose-50 text-rose-600 rounded-md hover:bg-rose-100 flex items-center gap-1 ml-4"><Icons.RefreshCw size={12}/> Reset</button></div>
+                    </div>
+                    <div className="flex-1 overflow-auto relative">
+                        <table className="w-full text-sm text-left border-collapse table-fixed min-w-[1500px]">
+                            <thead className="bg-white text-slate-600 sticky top-0 z-30 shadow-md">
+                                <tr className="h-12"><th className="w-[250px] px-4 border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-40 font-bold">Activity Name</th><th className="w-[85px] px-1 text-center border-b bg-slate-50 text-xs">Plan Start</th><th className="w-[85px] px-1 text-center border-b border-r bg-slate-50 text-xs">Plan End</th><th className="w-[50px] px-1 text-center border-b border-r bg-slate-50 text-xs">LT</th><th className="w-[95px] px-1 text-center border-b bg-blue-50/50 text-xs">Act. Start</th><th className="w-[95px] px-1 text-center border-b border-r bg-blue-50/50 text-xs">Act. End</th>{timelineMonths.map((d, i) => <th key={i} colSpan="4" className="border-b border-r bg-slate-50 text-center text-xs min-w-[120px]">{d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' })}</th>)}</tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {data.map((s, sIdx) => (
+                                    <React.Fragment key={s.id}>
+                                        <tr className="bg-slate-800 text-white shadow-sm z-20 relative"><td className="px-4 py-2 sticky left-0 z-20 bg-slate-800 border-r border-slate-700 font-bold text-xs uppercase h-10 flex items-center">{s.name} <button onClick={() => openAddActivity(sIdx)} className="ml-2 p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300"><Icons.Plus size={12}/></button></td><td colSpan="5" className="px-2 text-xs text-right text-slate-300 h-10 bg-slate-800">Launch: {formatDate(s.launchDate)}</td><td colSpan={timelineMonths.length * 4} className="bg-slate-800 h-10"></td></tr>
+                                        {s.activities.map((act, aIdx) => {
+                                            const today = new Date(); today.setHours(0,0,0,0);
+                                            const planStyle = calculateBarStyles(act.planStart, act.planEnd, TIMELINE_START, timelineTotalDuration);
+                                            const visualStart = (!act.actualStart && today > new Date(act.planEnd)) ? act.planEnd : act.actualStart;
+                                            const visualEnd = (act.actualStart && !act.actualEnd && today >= parseDateLocal(act.actualStart)) ? today.toISOString().split('T')[0] : ((!act.actualStart && today > new Date(act.planEnd)) ? today.toISOString().split('T')[0] : act.actualEnd);
+                                            
+                                            // FORCE PROGRESS BAR TO SHOW IF ACT.START IS FILLED, EVEN IN FUTURE
+                                            let actStyle = null;
+                                            if (act.actualStart) {
+                                                let planEndDate = new Date(act.planEnd);
+                                                let endPoint = act.actualEnd ? act.actualEnd : (today > planEndDate ? today.toISOString().split('T')[0] : act.planEnd);
+                                                actStyle = calculateBarStyles(act.actualStart, endPoint, TIMELINE_START, timelineTotalDuration);
+                                            } else if (!act.actualStart && today > new Date(act.planEnd)) {
+                                                 // Late start visualization
+                                                 actStyle = calculateBarStyles(act.planEnd, today.toISOString().split('T')[0], TIMELINE_START, timelineTotalDuration);
+                                            }
+
+                                            const isLate = (!act.actualEnd && today > new Date(act.planEnd)) || (act.actualEnd && new Date(act.actualEnd) > new Date(act.planEnd));
+                                            
+                                            // Progress calculation
+                                            let progressPercent = 0;
+                                            const isInProgress = act.actualStart && !act.actualEnd;
+                                            if (isInProgress) {
+                                                const start = parseDateLocal(act.actualStart);
+                                                const end = new Date(act.planEnd);
+                                                let totalDur = (end - start) / (1000 * 60 * 60 * 24);
+                                                if(totalDur <= 0) totalDur = 1;
+                                                const elapsed = (today - start) / (1000 * 60 * 60 * 24);
+                                                progressPercent = Math.round((elapsed / totalDur) * 100);
+                                                if (progressPercent < 0) progressPercent = 0; 
+                                                if (progressPercent > 100) progressPercent = 100;
+                                            }
+
+                                            return (
+                                                <tr key={`${s.id}-${act.id}`} className="hover:bg-slate-50 h-11 group/item border-b border-slate-50">
+                                                    <td className="px-4 py-1 font-medium text-slate-700 border-r border-slate-200 sticky left-0 bg-white z-10 text-xs"><div className="flex justify-between items-center w-full"><div className="flex items-center gap-2 truncate flex-1"><span className="text-slate-400 text-[10px] min-w-[15px]">{act.id}.</span><span title={act.name} className="truncate">{act.name}</span>{isInProgress && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse ml-1" title="In Progress"></span>}</div><div className="hidden group-hover/item:flex gap-1 bg-white/80 pl-1"><button onClick={() => openEditActivity(sIdx, aIdx)} className="p-1 text-slate-400 hover:text-blue-600 rounded"><Icons.Edit size={12} /></button><button onClick={() => confirmDeleteActivity(sIdx, aIdx)} className="p-1 text-slate-400 hover:text-rose-600 rounded"><Icons.Trash2 size={12} /></button></div></div></td>
+                                                    <td className="px-1 text-slate-500 text-[10px] text-center border-r border-slate-100 bg-slate-50/30">{formatDate(act.planStart)}</td>
+                                                    <td className="px-1 text-slate-500 text-[10px] text-center border-r border-slate-200 bg-slate-50/30">{formatDate(act.planEnd)}</td>
+                                                    <td className="px-1 text-slate-500 text-[10px] text-center border-r border-slate-200 bg-slate-50/30">{act.leadTime}</td>
+                                                    <td className="px-1 py-1 bg-blue-50/10 border-r border-slate-100 text-center"><input type="date" className="w-full text-[10px] p-1 border border-blue-100 rounded bg-white text-slate-700 outline-none" value={act.actualStart} onChange={(e) => handleUpdateActual(sIdx, aIdx, 'actualStart', e.target.value)} /></td>
+                                                    <td className="px-1 py-1 bg-blue-50/10 border-r border-slate-200 text-center"><input type="date" className={`w-full text-[10px] p-1 border rounded bg-white text-slate-700 outline-none ${isLate ? 'border-rose-300 text-rose-600' : 'border-blue-100'}`} value={act.actualEnd} onChange={(e) => handleUpdateActual(sIdx, aIdx, 'actualEnd', e.target.value)} /></td>
+                                                    <td colSpan={timelineMonths.length * 4} className="relative p-0 h-11 align-middle">
+                                                        <div className="relative w-full h-full flex items-center">
+                                                            <div className="absolute inset-0 flex w-full h-full pointer-events-none">{timelineMonths.map((_, mIdx) => <React.Fragment key={mIdx}><div className="flex-1 border-r border-slate-100 h-full border-dashed"></div><div className="flex-1 border-r border-slate-100 h-full border-dashed"></div><div className="flex-1 border-r border-slate-100 h-full border-dashed"></div><div className="flex-1 border-r border-slate-300 h-full"></div></React.Fragment>)}</div>
+                                                            {planStyle && <div className="absolute h-3 bg-slate-300 rounded-sm top-2 opacity-60" style={planStyle} title={`Plan: ${formatDate(act.planStart)}`}></div>}
+                                                            {actStyle && (
+                                                                <div 
+                                                                    className={`absolute h-2.5 rounded-sm shadow-sm top-5 border border-white/20 ${isLate ? 'bg-rose-500' : (act.actualEnd ? 'bg-emerald-500' : 'bg-blue-500')} flex items-center justify-center group/bar cursor-help`} 
+                                                                    style={actStyle}
+                                                                >
+                                                                     {isInProgress && !isLate && (
+                                                                        <span className="text-[8px] text-white font-bold leading-none px-1 drop-shadow-md truncate">{progressPercent}%</span>
+                                                                    )}
+                                                                    {isLate && (
+                                                                        <span className="text-[8px] text-white font-bold leading-none px-1 drop-shadow-md">!</span>
+                                                                    )}
+
+                                                                    {/* POPUP / TOOLTIP */}
+                                                                    <div className="hidden group-hover/bar:block absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-50 w-max max-w-[200px]">
+                                                                        <div className="bg-gray-900 text-white text-[10px] rounded-md py-1 px-2 shadow-xl border border-gray-700 relative">
+                                                                            <div className="font-bold border-b border-gray-700 pb-0.5 mb-0.5">{isLate ? 'Terlambat' : (act.actualEnd ? 'Selesai' : 'Sedang Berjalan')}</div>
+                                                                            <div>{formatDate(act.actualStart || visualStart)} - {formatDate(act.actualEnd || visualEnd)}</div>
+                                                                            {isInProgress && !isLate && <div className="text-blue-300 font-semibold mt-0.5">Progress: {progressPercent}%</div>}
+                                                                            {isLate && <div className="text-rose-300 font-semibold mt-0.5">Telat</div>}
+                                                                            {/* Arrow */}
+                                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </React.Fragment>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+
+            if (!isClient) return null;
+
+            return (
+                <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 relative">
+                    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+                        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-16">
+                                <div className="flex items-center gap-3">
+                                    {/* Logo WE Text Based */}
+                                    <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md tracking-tight border border-slate-700">
+                                        WE
+                                    </div>
+                                    <div>
+                                        <h1 className="text-lg font-bold tracking-tight text-slate-900 leading-none">WORLDWHITE ENTERPRISE</h1>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">RAYA 2027 PLANNER</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="hidden md:flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200">
+                                    <Icons.Clock size={16} className="text-blue-600"/>
+                                    <span className="font-mono font-medium">{currentTime.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} {currentTime.toLocaleTimeString('id-ID')}</span>
+                                </div>
+
+                                <nav className="flex space-x-1 bg-slate-100 p-1 rounded-lg overflow-x-auto max-w-[100vw] md:max-w-auto no-scrollbar">
+                                    <button onClick={() => setActiveTab('dashboard')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Dashboard</button>
+                                    <button onClick={() => setActiveTab('gantt')} className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all whitespace-nowrap ${activeTab === 'gantt' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Gantt Chart</button>
+                                </nav>
+                            </div>
+                        </div>
+                    </header>
+                    <main className="max-w-[1900px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        {activeTab === 'dashboard' && renderDashboard()}
+                        {activeTab === 'gantt' && renderGantt()}
+                    </main>
+                    <ConfirmationModal config={modalConfig} onConfirm={handleConfirm} onCancel={handleCancel} />
+                    <EditTaskModal config={editModalConfig} onClose={closeEditActivity} onSave={saveEditActivity} onChange={handleEditFormChange} />
+                    <AddTaskModal isOpen={addModalConfig.isOpen} onClose={closeAddActivity} onSave={handleSaveNewActivity} />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
