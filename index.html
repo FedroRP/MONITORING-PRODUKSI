@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MONITORING PRODUCTION ARTICLE - Dashboard & Gantt</title>
+    <title>MONITORING PRODUCTION - Dashboard & Gantt</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -68,15 +68,16 @@
             RefreshCw: (props) => <IconWrapper {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconWrapper>,
             Edit: (props) => <IconWrapper {...props}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></IconWrapper>,
             Plus: (props) => <IconWrapper {...props}><path d="M5 12h14"/><path d="M12 5v14"/></IconWrapper>,
+            User: (props) => <IconWrapper {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconWrapper>
         };
 
         // --- CONFIGURATION ---
         const SERIES_CONFIG = [
-            { id: 1, name: "Series 1", launchDate: "2027-01-04", schedule: [ { id: 1, start: "2026-06-01", end: "2026-06-14", leadTime: 14 }, { id: 2, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 3, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 4, start: "2026-06-20", end: "2026-06-24", leadTime: 5 }, { id: 5, start: "2026-06-25", end: "2026-06-29", leadTime: 5 }, { id: 6, start: "2026-06-30", end: "2026-07-06", leadTime: 7 }, { id: 7, start: "2026-07-07", end: "2026-09-11", leadTime: 67 }, { id: 8, start: "2026-07-07", end: "2026-08-20", leadTime: 45 }, { id: 9, start: "2026-08-14", end: "2026-08-27", leadTime: 14 }, { id: 10, start: "2026-08-28", end: "2026-09-11", leadTime: 15 }, { id: 11, start: "2026-09-12", end: "2026-11-17", leadTime: 67 }, { id: 12, start: "2026-11-18", end: "2026-11-22", leadTime: 5 }, { id: 13, start: "2026-11-18", end: "2026-11-27", leadTime: 10 }, { id: 14, start: "2026-11-23", end: "2026-12-07", leadTime: 15 } ] },
-            { id: 2, name: "Series 2", launchDate: "2027-01-11", schedule: [ { id: 1, start: "2026-06-15", end: "2026-06-29", leadTime: 15 }, { id: 2, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 3, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 4, start: "2026-07-05", end: "2026-07-09", leadTime: 5 }, { id: 5, start: "2026-07-10", end: "2026-07-14", leadTime: 5 }, { id: 6, start: "2026-07-15", end: "2026-07-21", leadTime: 7 }, { id: 7, start: "2026-07-22", end: "2026-09-26", leadTime: 67 }, { id: 8, start: "2026-07-22", end: "2026-09-04", leadTime: 45 }, { id: 9, start: "2026-08-29", end: "2026-09-11", leadTime: 14 }, { id: 10, start: "2026-09-12", end: "2026-09-26", leadTime: 15 }, { id: 11, start: "2026-09-27", end: "2026-12-02", leadTime: 67 }, { id: 12, start: "2026-12-03", end: "2026-12-07", leadTime: 5 }, { id: 13, start: "2026-12-03", end: "2026-12-12", leadTime: 10 }, { id: 14, start: "2026-12-12", end: "2026-12-26", leadTime: 15 } ] },
-            { id: 3, name: "Series 3", launchDate: "2027-01-18", schedule: [ { id: 1, start: "2026-07-01", end: "2026-07-14", leadTime: 14 }, { id: 2, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 3, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 4, start: "2026-07-20", end: "2026-07-24", leadTime: 5 }, { id: 5, start: "2026-07-25", end: "2026-07-29", leadTime: 5 }, { id: 6, start: "2026-07-30", end: "2026-08-05", leadTime: 7 }, { id: 7, start: "2026-08-06", end: "2026-09-11", leadTime: 37 }, { id: 8, start: "2026-08-06", end: "2026-09-19", leadTime: 45 }, { id: 9, start: "2026-09-13", end: "2026-09-26", leadTime: 14 }, { id: 10, start: "2026-09-27", end: "2026-10-11", leadTime: 15 }, { id: 11, start: "2026-10-12", end: "2026-12-17", leadTime: 67 }, { id: 12, start: "2026-12-18", end: "2026-12-22", leadTime: 5 }, { id: 13, start: "2026-12-18", end: "2026-12-27", leadTime: 10 }, { id: 14, start: "2026-12-27", end: "2027-01-08", leadTime: 13 } ] },
-            { id: 4, name: "Series 4", launchDate: "2027-01-25", schedule: [ { id: 1, start: "2026-07-15", end: "2026-07-29", leadTime: 15 }, { id: 2, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 3, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 4, start: "2026-08-04", end: "2026-08-08", leadTime: 5 }, { id: 5, start: "2026-08-09", end: "2026-08-13", leadTime: 5 }, { id: 6, start: "2026-08-14", end: "2026-08-20", leadTime: 7 }, { id: 7, start: "2026-08-21", end: "2026-10-26", leadTime: 67 }, { id: 8, start: "2026-08-21", end: "2026-10-04", leadTime: 45 }, { id: 9, start: "2026-09-28", end: "2026-10-11", leadTime: 14 }, { id: 10, start: "2026-10-12", end: "2026-10-26", leadTime: 15 }, { id: 11, start: "2026-10-27", end: "2027-01-01", leadTime: 67 }, { id: 12, start: "2027-01-02", end: "2027-01-06", leadTime: 5 }, { id: 13, start: "2027-01-02", end: "2027-01-11", leadTime: 10 }, { id: 14, start: "2027-01-06", end: "2027-01-15", leadTime: 10 } ] },
-            { id: 5, name: "Series 5", launchDate: "2027-02-01", schedule: [ { id: 1, start: "2026-08-01", end: "2026-08-14", leadTime: 14 }, { id: 2, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 3, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 4, start: "2026-08-20", end: "2026-08-24", leadTime: 5 }, { id: 5, start: "2026-08-25", end: "2026-08-29", leadTime: 5 }, { id: 6, start: "2026-08-30", end: "2026-09-05", leadTime: 7 }, { id: 7, start: "2026-09-06", end: "2026-11-11", leadTime: 67 }, { id: 8, start: "2026-09-06", end: "2026-10-20", leadTime: 45 }, { id: 9, start: "2026-10-14", end: "2026-10-27", leadTime: 14 }, { id: 10, start: "2026-10-28", end: "2026-11-11", leadTime: 15 }, { id: 11, start: "2026-11-12", end: "2027-01-17", leadTime: 67 }, { id: 12, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 13, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 14, start: "2027-01-23", end: "2027-01-24", leadTime: 2 } ] }
+            { id: 1, name: "Series 1", ppic: "Staff A", launchDate: "2027-01-04", schedule: [ { id: 1, start: "2026-06-01", end: "2026-06-14", leadTime: 14 }, { id: 2, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 3, start: "2026-06-15", end: "2026-06-19", leadTime: 5 }, { id: 4, start: "2026-06-20", end: "2026-06-24", leadTime: 5 }, { id: 5, start: "2026-06-25", end: "2026-06-29", leadTime: 5 }, { id: 6, start: "2026-06-30", end: "2026-07-06", leadTime: 7 }, { id: 7, start: "2026-07-07", end: "2026-09-11", leadTime: 67 }, { id: 8, start: "2026-07-07", end: "2026-08-20", leadTime: 45 }, { id: 9, start: "2026-08-14", end: "2026-08-27", leadTime: 14 }, { id: 10, start: "2026-08-28", end: "2026-09-11", leadTime: 15 }, { id: 11, start: "2026-09-12", end: "2026-11-17", leadTime: 67 }, { id: 12, start: "2026-11-18", end: "2026-11-22", leadTime: 5 }, { id: 13, start: "2026-11-18", end: "2026-11-27", leadTime: 10 }, { id: 14, start: "2026-11-23", end: "2026-12-07", leadTime: 15 } ] },
+            { id: 2, name: "Series 2", ppic: "Staff B", launchDate: "2027-01-11", schedule: [ { id: 1, start: "2026-06-15", end: "2026-06-29", leadTime: 15 }, { id: 2, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 3, start: "2026-06-30", end: "2026-07-04", leadTime: 5 }, { id: 4, start: "2026-07-05", end: "2026-07-09", leadTime: 5 }, { id: 5, start: "2026-07-10", end: "2026-07-14", leadTime: 5 }, { id: 6, start: "2026-07-15", end: "2026-07-21", leadTime: 7 }, { id: 7, start: "2026-07-22", end: "2026-09-26", leadTime: 67 }, { id: 8, start: "2026-07-22", end: "2026-09-04", leadTime: 45 }, { id: 9, start: "2026-08-29", end: "2026-09-11", leadTime: 14 }, { id: 10, start: "2026-09-12", end: "2026-09-26", leadTime: 15 }, { id: 11, start: "2026-09-27", end: "2026-12-02", leadTime: 67 }, { id: 12, start: "2026-12-03", end: "2026-12-07", leadTime: 5 }, { id: 13, start: "2026-12-03", end: "2026-12-12", leadTime: 10 }, { id: 14, start: "2026-12-12", end: "2026-12-26", leadTime: 15 } ] },
+            { id: 3, name: "Series 3", ppic: "Staff C", launchDate: "2027-01-18", schedule: [ { id: 1, start: "2026-07-01", end: "2026-07-14", leadTime: 14 }, { id: 2, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 3, start: "2026-07-15", end: "2026-07-19", leadTime: 5 }, { id: 4, start: "2026-07-20", end: "2026-07-24", leadTime: 5 }, { id: 5, start: "2026-07-25", end: "2026-07-29", leadTime: 5 }, { id: 6, start: "2026-07-30", end: "2026-08-05", leadTime: 7 }, { id: 7, start: "2026-08-06", end: "2026-09-11", leadTime: 37 }, { id: 8, start: "2026-08-06", end: "2026-09-19", leadTime: 45 }, { id: 9, start: "2026-09-13", end: "2026-09-26", leadTime: 14 }, { id: 10, start: "2026-09-27", end: "2026-10-11", leadTime: 15 }, { id: 11, start: "2026-10-12", end: "2026-12-17", leadTime: 67 }, { id: 12, start: "2026-12-18", end: "2026-12-22", leadTime: 5 }, { id: 13, start: "2026-12-18", end: "2026-12-27", leadTime: 10 }, { id: 14, start: "2026-12-27", end: "2027-01-08", leadTime: 13 } ] },
+            { id: 4, name: "Series 4", ppic: "Staff D", launchDate: "2027-01-25", schedule: [ { id: 1, start: "2026-07-15", end: "2026-07-29", leadTime: 15 }, { id: 2, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 3, start: "2026-07-30", end: "2026-08-03", leadTime: 5 }, { id: 4, start: "2026-08-04", end: "2026-08-08", leadTime: 5 }, { id: 5, start: "2026-08-09", end: "2026-08-13", leadTime: 5 }, { id: 6, start: "2026-08-14", end: "2026-08-20", leadTime: 7 }, { id: 7, start: "2026-08-21", end: "2026-10-26", leadTime: 67 }, { id: 8, start: "2026-08-21", end: "2026-10-04", leadTime: 45 }, { id: 9, start: "2026-09-28", end: "2026-10-11", leadTime: 14 }, { id: 10, start: "2026-10-12", end: "2026-10-26", leadTime: 15 }, { id: 11, start: "2026-10-27", end: "2027-01-01", leadTime: 67 }, { id: 12, start: "2027-01-02", end: "2027-01-06", leadTime: 5 }, { id: 13, start: "2027-01-02", end: "2027-01-11", leadTime: 10 }, { id: 14, start: "2027-01-06", end: "2027-01-15", leadTime: 10 } ] },
+            { id: 5, name: "Series 5", ppic: "Staff E", launchDate: "2027-02-01", schedule: [ { id: 1, start: "2026-08-01", end: "2026-08-14", leadTime: 14 }, { id: 2, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 3, start: "2026-08-15", end: "2026-08-19", leadTime: 5 }, { id: 4, start: "2026-08-20", end: "2026-08-24", leadTime: 5 }, { id: 5, start: "2026-08-25", end: "2026-08-29", leadTime: 5 }, { id: 6, start: "2026-08-30", end: "2026-09-05", leadTime: 7 }, { id: 7, start: "2026-09-06", end: "2026-11-11", leadTime: 67 }, { id: 8, start: "2026-09-06", end: "2026-10-20", leadTime: 45 }, { id: 9, start: "2026-10-14", end: "2026-10-27", leadTime: 14 }, { id: 10, start: "2026-10-28", end: "2026-11-11", leadTime: 15 }, { id: 11, start: "2026-11-12", end: "2027-01-17", leadTime: 67 }, { id: 12, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 13, start: "2027-01-18", end: "2027-01-22", leadTime: 5 }, { id: 14, start: "2027-01-23", end: "2027-01-24", leadTime: 2 } ] }
         ];
 
         const TASK_NAMES = [
@@ -181,11 +182,12 @@
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity modal-enter-active">
                     <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 transform transition-all scale-100">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-slate-800">Edit Nama Series</h3>
+                            <h3 className="text-lg font-bold text-slate-800">Edit Data Series</h3>
                             <button onClick={onClose}><Icons.X size={20} className="text-slate-400 hover:text-slate-600"/></button>
                         </div>
                         <div className="space-y-3">
                             <div><label className="block text-xs font-medium text-slate-500 mb-1">Nama Series</label><input type="text" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={seriesData.name} onChange={(e) => onChange('name', e.target.value)} /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">PPIC In Charge</label><input type="text" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={seriesData.ppic} onChange={(e) => onChange('ppic', e.target.value)} placeholder="Contoh: Budi" /></div>
                             <div><label className="block text-xs font-medium text-slate-500 mb-1">Target Launch</label><input type="date" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={seriesData.launchDate} onChange={(e) => onChange('launchDate', e.target.value)} /></div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
@@ -199,9 +201,9 @@
 
         const AddSeriesModal = ({ isOpen, onClose, onSave }) => {
             if (!isOpen) return null;
-            const [form, setForm] = useState({ name: '', launchDate: '' });
+            const [form, setForm] = useState({ name: '', ppic: '', launchDate: '' });
             const handleChange = (e) => { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })); };
-            const handleSubmit = () => { onSave(form); setForm({ name: '', launchDate: '' }); };
+            const handleSubmit = () => { onSave(form); setForm({ name: '', ppic: '', launchDate: '' }); };
 
             return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity modal-enter-active">
@@ -212,6 +214,7 @@
                         </div>
                         <div className="space-y-3">
                             <div><label className="block text-xs font-medium text-slate-500 mb-1">Nama Series</label><input type="text" name="name" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.name} onChange={handleChange} placeholder="Contoh: Series 6" /></div>
+                            <div><label className="block text-xs font-medium text-slate-500 mb-1">PPIC In Charge</label><input type="text" name="ppic" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.ppic} onChange={handleChange} placeholder="Contoh: Budi" /></div>
                             <div><label className="block text-xs font-medium text-slate-500 mb-1">Target Launch</label><input type="date" name="launchDate" className="w-full p-2 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" value={form.launchDate} onChange={handleChange} /></div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
@@ -313,7 +316,7 @@
                         const tasks = config.schedule.map((sch, index) => ({
                             id: index + 1, name: TASK_NAMES[index], leadTime: sch.leadTime, planStart: sch.start, planEnd: sch.end, actualStart: "", actualEnd: "", status: "pending"
                         }));
-                        return { id: config.id, name: config.name, launchDate: config.launchDate, activities: tasks };
+                        return { id: config.id, name: config.name, ppic: config.ppic || '', launchDate: config.launchDate, activities: tasks };
                     });
                     setData(initialData);
                 }
@@ -362,7 +365,7 @@
 
             const openEditSeries = useCallback((sIdx) => {
                 const series = data[sIdx];
-                setEditSeriesModalConfig({ isOpen: true, seriesIndex: sIdx, data: { ...series } });
+                setEditSeriesModalConfig({ isOpen: true, seriesIndex: sIdx, data: { ppic: '', ...series } });
             }, [data]);
 
             const closeEditSeries = useCallback(() => setEditSeriesModalConfig({ isOpen: false, seriesIndex: null, data: null }), []);
@@ -376,7 +379,7 @@
                 if (seriesIndex !== null && newDataItem) {
                     const newData = data.map((series, sIdx) => {
                             if (sIdx !== seriesIndex) return series;
-                            return { ...series, name: newDataItem.name, launchDate: newDataItem.launchDate };
+                            return { ...series, name: newDataItem.name, ppic: newDataItem.ppic, launchDate: newDataItem.launchDate };
                     });
                     setData(newData);
                     closeEditSeries();
@@ -404,6 +407,7 @@
                 const newSeries = {
                     id: newId,
                     name: formData.name,
+                    ppic: formData.ppic,
                     launchDate: formData.launchDate,
                     activities: newActivities
                 };
@@ -446,7 +450,7 @@
             const resetGanttData = () => {
                 const initialData = SERIES_CONFIG.map((config) => {
                     const tasks = config.schedule.map((sch, index) => ({ id: index + 1, name: TASK_NAMES[index], leadTime: sch.leadTime, planStart: sch.start, planEnd: sch.end, actualStart: "", actualEnd: "", status: "pending" }));
-                    return { id: config.id, name: config.name, launchDate: config.launchDate, activities: tasks };
+                    return { id: config.id, name: config.name, ppic: config.ppic || '', launchDate: config.launchDate, activities: tasks };
                 });
                 setData(initialData);
             };
@@ -600,7 +604,11 @@
                                     return (
                                         <div key={series.id} className="group">
                                             <div className="flex justify-between items-center mb-2">
-                                                <div className="flex items-center gap-2"><h4 className="font-bold text-slate-700">{series.name}</h4><span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Target: {formatDate(series.launchDate)}</span></div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-slate-700">{series.name}</h4>
+                                                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Target: {formatDate(series.launchDate)}</span>
+                                                    {series.ppic && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 font-medium">PPIC: {series.ppic}</span>}
+                                                </div>
                                                 <div className="flex items-center gap-3 text-xs font-semibold">
                                                     <span className="text-emerald-600">{onTimeCount} Done</span>
                                                     <span className="text-rose-600">{lateCount} Late</span>
@@ -637,7 +645,7 @@
                             <tbody className="divide-y divide-slate-100">
                                 {data.map((s, sIdx) => (
                                     <React.Fragment key={s.id}>
-                                        <tr className="bg-slate-800 text-white shadow-sm z-20 relative"><td className="px-4 py-2 sticky left-0 z-20 bg-slate-800 border-r border-slate-700 font-bold text-xs uppercase h-10 flex items-center gap-2"><span className="truncate">{s.name}</span><button onClick={() => openEditSeries(sIdx)} className="p-1 text-slate-400 hover:text-white rounded"><Icons.Edit size={12}/></button><button onClick={() => openAddActivity(sIdx)} className="ml-auto p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300"><Icons.Plus size={12}/></button></td><td colSpan="5" className="px-2 text-xs text-right text-slate-300 h-10 bg-slate-800">Launch: {formatDate(s.launchDate)}</td><td colSpan={timelineMonths.length * 4} className="bg-slate-800 h-10"></td></tr>
+                                        <tr className="bg-slate-800 text-white shadow-sm z-20 relative"><td className="px-4 py-2 sticky left-0 z-20 bg-slate-800 border-r border-slate-700 font-bold text-xs uppercase h-10 flex items-center gap-2"><span className="truncate">{s.name} <span className="text-slate-400 font-normal normal-case">({s.ppic || '-'})</span></span><button onClick={() => openEditSeries(sIdx)} className="p-1 text-slate-400 hover:text-white rounded"><Icons.Edit size={12}/></button><button onClick={() => openAddActivity(sIdx)} className="ml-auto p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300"><Icons.Plus size={12}/></button></td><td colSpan="5" className="px-2 text-xs text-right text-slate-300 h-10 bg-slate-800">Launch: {formatDate(s.launchDate)}</td><td colSpan={timelineMonths.length * 4} className="bg-slate-800 h-10"></td></tr>
                                         {s.activities.map((act, aIdx) => {
                                             const today = new Date(); today.setHours(0,0,0,0);
                                             const planStyle = calculateBarStyles(act.planStart, act.planEnd, TIMELINE_START, timelineTotalDuration);
