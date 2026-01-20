@@ -65,7 +65,6 @@
             TrendingUp: (props) => <IconWrapper {...props}><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></IconWrapper>,
             Trash2: (props) => <IconWrapper {...props}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></IconWrapper>,
             X: (props) => <IconWrapper {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconWrapper>,
-            RefreshCw: (props) => <IconWrapper {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconWrapper>,
             Edit: (props) => <IconWrapper {...props}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></IconWrapper>,
             Plus: (props) => <IconWrapper {...props}><path d="M5 12h14"/><path d="M12 5v14"/></IconWrapper>,
             User: (props) => <IconWrapper {...props}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconWrapper>
@@ -447,16 +446,6 @@
             }, [data]);
             const confirmDeleteActivity = useCallback((sIdx, aIdx) => showConfirm("Hapus aktivitas ini?", () => deleteActivity(sIdx, aIdx)), [showConfirm, deleteActivity]);
 
-            const resetGanttData = () => {
-                const initialData = SERIES_CONFIG.map((config) => {
-                    const tasks = config.schedule.map((sch, index) => ({ id: index + 1, name: TASK_NAMES[index], leadTime: sch.leadTime, planStart: sch.start, planEnd: sch.end, actualStart: "", actualEnd: "", status: "pending" }));
-                    return { id: config.id, name: config.name, ppic: config.ppic || '', launchDate: config.launchDate, activities: tasks };
-                });
-                setData(initialData);
-            };
-
-            const confirmResetGantt = () => showConfirm("Reset Gantt Chart?", resetGanttData);
-
             const handleUpdateActual = (sIdx, aIdx, field, val) => { const newData = data.map((series, i) => { if (i !== sIdx) return series; const newActivities = [...series.activities]; newActivities[aIdx] = { ...newActivities[aIdx], [field]: val }; return { ...series, activities: newActivities }; }); setData(newData); };
 
             const stats = useMemo(() => {
@@ -517,12 +506,8 @@
             const renderDashboard = () => (
                 <div className="space-y-6 animate-fade-in pb-10">
                     <div className="bg-gradient-to-r from-slate-800 to-indigo-900 rounded-xl p-6 text-white shadow-lg mb-6">
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                            <div><h2 className="text-2xl font-bold mb-1">Production Monitor</h2><p className="text-indigo-200 text-sm">Target Launching: Jan - Feb 2027</p></div>
-                            <div className="flex gap-4 text-center">
-                                <div className="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/10"><p className="text-xs text-indigo-200 uppercase tracking-wide">Project Kickoff</p><p className="font-mono font-bold text-sm">{formatDate(projectStart)}</p></div>
-                                <div className="bg-emerald-500/20 px-4 py-2 rounded-lg border border-emerald-500/30 backdrop-blur-sm"><p className="text-xs text-emerald-300 uppercase tracking-wide">Launch Period</p><p className="font-mono font-bold text-emerald-300 text-sm">{formatDate(SERIES_CONFIG[0].launchDate)} - {formatDate(SERIES_CONFIG[SERIES_CONFIG.length - 1].launchDate)}</p></div>
-                            </div>
+                        <div className="flex justify-center items-center w-full">
+                            <h2 className="text-2xl font-bold mb-1 text-center tracking-wider">Production Monitor</h2>
                         </div>
                     </div>
                     <div className={`rounded-xl p-6 shadow-sm border mb-8 flex flex-col md:flex-row items-start gap-4 transition-colors duration-500 ${stats.delayed > 0 ? 'bg-rose-50 border-rose-100' : 'bg-emerald-50 border-emerald-100'}`}>
